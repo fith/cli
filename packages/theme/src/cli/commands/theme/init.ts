@@ -1,7 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
-import {cli, path, ui} from '@shopify/cli-kit'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {cli, path, git, ui} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
 
 export default class Init extends Command {
@@ -28,17 +27,53 @@ export default class Init extends Command {
 
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Init)
-    const directory = flags.path ? path.resolve(flags.path) : process.cwd()
-    const name = args.name || (await this.promptName())
-    const command = ['theme', 'init', name]
-    await execCLI2(command, {
-      directory,
-    })
+    const root = flags.path ? path.resolve(flags.path) : process.cwd()
+    const directory = args.name || 'dawn'
+    const destination = `${root}/${directory}`
+
+    // eslint-disable-next-line no-console
+    console.log(args, flags, root)
+
+    await this.themeInit(destination)
+
+    // const name = args.name || (await this.promptName())
+    // const command = ['theme', 'init', name]
+    // await execCLI2(command, {
+    //   directory,
+    // })
   }
 
   async promptName() {
     const question: ui.Question = {type: 'input', name: 'name', message: 'Name of the new theme'}
     const {name} = await ui.prompt([question])
     return name
+  }
+
+  async themeInit(destination: string) {
+    const url = 'https://github.com/Shopify/dawn.git'
+
+    await ui
+      .newListr([
+        {
+          title: `!!! title !!!`,
+          task: async () => {
+            await git.downloadRepository({
+              repoUrl: url,
+              destination,
+              shallow: false,
+            })
+            // const origin = path.join(templateDownloadDir, functionTemplatePath(options))
+            // await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
+            // const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
+            // if (await file.exists(configYamlPath)) {
+            //   await file.remove(configYamlPath)
+            // }
+            return {
+              successMessage: `!!! success !!!`,
+            }
+          },
+        },
+      ])
+      .run()
   }
 }
