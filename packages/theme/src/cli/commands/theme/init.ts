@@ -1,7 +1,8 @@
 import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
-import {cli, path, git, ui} from '@shopify/cli-kit'
+import {cli, path, ui} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
+import {rawClone, latestClone} from '../../services/init.js'
 
 export default class Init extends Command {
   static description = 'Clones a Git repository to use as a starting point for building a new theme.'
@@ -23,57 +24,35 @@ export default class Init extends Command {
         "The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git",
       env: 'SHOPIFY_FLAG_CLONE_URL',
     }),
+    latest: Flags.boolean({
+      char: 'l',
+      description: "Downloads the latest release of the \`clone-url\`",
+      env: 'SHOPIFY_FLAG_LATEST',
+    }),
   }
 
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Init)
-    const root = flags.path ? path.resolve(flags.path) : process.cwd()
     const directory = args.name || 'dawn'
-    const destination = `${root}/${directory}`
+    const destination = path.resolve(flags.path, directory)
+    const repoUrl = 'https://github.com/Shopify/dawn.git'
+    const name = args.name || (await this.promptName())
 
     // eslint-disable-next-line no-console
-    console.log(args, flags, root)
+    console.log(args, flags, destination)
+    // console.log(destination)
 
-    await this.themeInit(destination)
-
-    // const name = args.name || (await this.promptName())
-    // const command = ['theme', 'init', name]
-    // await execCLI2(command, {
-    //   directory,
-    // })
+    // await this.themeInit(destination)
+    if (flags.latest) {
+      latestClone({ repoUrl, destination })
+    } else {
+      rawClone({ repoUrl, destination })
+    }
   }
 
   async promptName() {
     const question: ui.Question = {type: 'input', name: 'name', message: 'Name of the new theme'}
     const {name} = await ui.prompt([question])
     return name
-  }
-
-  async themeInit(destination: string) {
-    const url = 'https://github.com/Shopify/dawn.git'
-
-    await ui
-      .newListr([
-        {
-          title: `!!! title !!!`,
-          task: async () => {
-            await git.downloadRepository({
-              repoUrl: url,
-              destination,
-              shallow: false,
-            })
-            // const origin = path.join(templateDownloadDir, functionTemplatePath(options))
-            // await template.recursiveDirectoryCopy(origin, options.extensionDirectory, options)
-            // const configYamlPath = path.join(options.extensionDirectory, 'script.config.yml')
-            // if (await file.exists(configYamlPath)) {
-            //   await file.remove(configYamlPath)
-            // }
-            return {
-              successMessage: `!!! success !!!`,
-            }
-          },
-        },
-      ])
-      .run()
   }
 }
