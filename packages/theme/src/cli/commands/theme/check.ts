@@ -76,8 +76,11 @@ Excludes checks matching any category when specified more than once`,
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Check)
-    await execCLI2(['theme', 'check', flags.path, ...this.passThroughFlags(flags, {exclude: ['path', 'verbose']})], {
-      directory: flags.path,
-    })
+    await execCLI2(
+      ['theme', 'check', flags.path, ...this.passThroughFlags(flags, {exclude: ['path', 'preset', 'verbose']})],
+      {
+        directory: flags.path,
+      },
+    )
   }
 }

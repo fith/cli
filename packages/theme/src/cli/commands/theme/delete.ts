@@ -43,7 +43,7 @@ export default class Delete extends ThemeCommand {
       command.push(...argv)
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {exclude: ['store', 'verbose', 'password']})
+    const flagsToPass = this.passThroughFlags(flags, {exclude: ['store', 'preset', 'verbose', 'password']})
     command.push(...flagsToPass)
 
     const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
