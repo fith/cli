@@ -1,8 +1,8 @@
 import {themeFlags} from '../../flags.js'
+import {rawClone, latestClone} from '../../services/init.js'
 import {Flags} from '@oclif/core'
 import {cli, path, ui} from '@shopify/cli-kit'
 import Command from '@shopify/cli-kit/node/base-command'
-import {rawClone, latestClone} from '../../services/init.js'
 
 export default class Init extends Command {
   static description = 'Clones a Git repository to use as a starting point for building a new theme.'
@@ -26,7 +26,7 @@ export default class Init extends Command {
     }),
     latest: Flags.boolean({
       char: 'l',
-      description: "Downloads the latest release of the \`clone-url\`",
+      description: 'Downloads the latest release of the `clone-url`',
       env: 'SHOPIFY_FLAG_LATEST',
     }),
   }
@@ -44,10 +44,11 @@ export default class Init extends Command {
 
     // await this.themeInit(destination)
     if (flags.latest) {
-      latestClone({ repoUrl, destination })
+      await latestClone({repoUrl, destination})
     } else {
-      rawClone({ repoUrl, destination })
+      await rawClone({repoUrl, destination})
     }
+    // console.log(destination)
   }
 
   async promptName() {
@@ -56,3 +57,4 @@ export default class Init extends Command {
     return name
   }
 }
+// https://gist.github.com/karreiro/43d63f78cd69f1569230c673a8c60437
