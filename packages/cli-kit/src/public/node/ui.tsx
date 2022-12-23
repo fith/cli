@@ -5,7 +5,7 @@ import {Fatal} from '../../error.js'
 import {alert} from '../../private/node/ui/alert.js'
 import {AlertProps} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
-import Prompt, {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
+import {Props as PromptProps} from '../../private/node/ui/components/Prompt.js'
 import React from 'react'
 import {AbortController} from 'abort-controller'
 import {RenderOptions} from 'ink'
@@ -100,12 +100,12 @@ export function renderInfo(options: RenderAlertOptions) {
  * │  Body                                                    │
  * │                                                          │
  * │  Next steps                                              │
- * │    • Run `cd santorini-goods`                              │
- * │    • To preview your project, run `npm app dev`            │
- * │    • To add extensions, run `npm generate extension`       │
+ * │    • Run `cd santorini-goods`                            │
+ * │    • To preview your project, run `npm app dev`          │
+ * │    • To add extensions, run `npm generate extension`     │
  * │                                                          │
  * │  Reference                                               │
- * │    • Run `npm shopify help`                                │
+ * │    • Run `npm shopify help`                              │
  * │    • Press 'return' to open the dev docs:                │
  * │      https://shopify.dev                                 │
  * │                                                          │
