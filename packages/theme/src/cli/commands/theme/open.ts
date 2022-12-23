@@ -1,9 +1,9 @@
 import {getThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
+import {findOrSelectTheme} from '../../utilities/themes.js'
 import {Flags} from '@oclif/core'
 import {cli, session} from '@shopify/cli-kit'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 export default class Open extends ThemeCommand {
   static description = 'Opens the preview of your remote theme.'
@@ -43,6 +43,19 @@ export default class Open extends ThemeCommand {
 
     const store = await getThemeStore(flags)
     const adminSession = await session.ensureAuthenticatedThemes(store, flags.password)
-    await execCLI2(command, {adminSession})
+
+    const theme = await findOrSelectTheme(adminSession, {
+      header: 'Select a theme to open',
+      // identifier: flags.theme,
+    })
+
+    // await execCLI2(command, {adminSession})
+
+    // eslint-disable-next-line no-warning-comments
+    // TODO handle theme selection
+    if (flags.theme!) {
+      // const theme = await findTheme(flags.theme, adminSession)
+      // uix
+    }
   }
 }
