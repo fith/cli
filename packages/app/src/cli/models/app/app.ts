@@ -1,4 +1,4 @@
-import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
+import {ConfigurationExtension, Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
 import {schema} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -58,6 +58,7 @@ export interface AppInterface {
     ui: UIExtension[]
     theme: ThemeExtension[]
     function: FunctionExtension[]
+    configurations: ConfigurationExtension[]
   }
   errors?: AppErrors
   hasExtensions: () => boolean
@@ -82,6 +83,7 @@ export class App implements AppInterface {
     ui: UIExtension[]
     theme: ThemeExtension[]
     function: FunctionExtension[]
+    configurations: ConfigurationExtension[]
   }
 
   // eslint-disable-next-line max-params
@@ -97,6 +99,7 @@ export class App implements AppInterface {
     ui: UIExtension[],
     theme: ThemeExtension[],
     functions: FunctionExtension[],
+    configurations: ConfigurationExtension[],
     usesWorkspaces: boolean,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
@@ -114,6 +117,7 @@ export class App implements AppInterface {
       ui,
       theme,
       function: functions,
+      configurations,
     }
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
@@ -126,7 +130,10 @@ export class App implements AppInterface {
 
   hasExtensions(): boolean {
     return (
-      this.extensions.ui.length !== 0 || this.extensions.function.length !== 0 || this.extensions.theme.length !== 0
+      this.extensions.ui.length !== 0 ||
+      this.extensions.function.length !== 0 ||
+      this.extensions.theme.length !== 0 ||
+      this.extensions.configurations.length !== 0
     )
   }
 
@@ -135,8 +142,13 @@ export class App implements AppInterface {
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
-    const allExternsions = [...this.extensions.ui, ...this.extensions.function, ...this.extensions.theme]
-    return allExternsions.filter(
+    const allExtensions = [
+      ...this.extensions.ui,
+      ...this.extensions.function,
+      ...this.extensions.theme,
+      ...this.extensions.configurations,
+    ]
+    return allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
   }

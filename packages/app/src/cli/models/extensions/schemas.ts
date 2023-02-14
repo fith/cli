@@ -83,6 +83,11 @@ export const BaseFunctionConfigurationSchema = schema.object({
     .optional(),
 })
 
+export const BaseConfigurationExtensionSchema = schema.object({
+  name: schema.string(),
+  type: schema.string(),
+})
+
 export type NewExtensionPointSchemaType = schema.infer<typeof NewExtensionPointSchema>
 
 // Base config type that all config schemas must extend.

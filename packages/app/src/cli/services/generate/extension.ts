@@ -5,6 +5,7 @@ import {GenericSpecification} from '../../models/app/extensions.js'
 import {UIExtensionSpec} from '../../models/extensions/ui.js'
 import {ThemeExtensionSpec} from '../../models/extensions/theme.js'
 import {buildGraphqlTypes} from '../function/build.js'
+import {ConfigurationExtensionSpec} from '../../models/extensions/configurations.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -49,6 +50,7 @@ export type ExtensionFlavor = 'vanilla-js' | 'react' | 'typescript' | 'typescrip
 type FunctionExtensionInitOptions = ExtensionInitOptions<FunctionSpec> & ExtensionDirectory
 type UIExtensionInitOptions = ExtensionInitOptions<UIExtensionSpec> & ExtensionDirectory
 type ThemeExtensionInitOptions = ExtensionInitOptions<ThemeExtensionSpec> & ExtensionDirectory
+type ConfigurationExtensionInitOptions = ExtensionInitOptions<ConfigurationExtensionSpec> & ExtensionDirectory
 
 export type TemplateFlavor = 'javascript' | 'rust' | 'wasm'
 function getTemplateFlavor(flavor: ExtensionFlavor): TemplateFlavor {
@@ -75,6 +77,9 @@ async function extensionInit(options: ExtensionInitOptions): Promise<string> {
       break
     case 'ui':
       await uiExtensionInit({...(options as UIExtensionInitOptions), extensionDirectory})
+      break
+    case 'configuration':
+      await configurationExtensionInit({...(options as ConfigurationExtensionInitOptions), extensionDirectory})
       break
   }
   return relativizePath(extensionDirectory)
@@ -264,6 +269,33 @@ async function functionExtensionInit(options: FunctionExtensionInitOptions) {
 
     await renderTasks(taskList)
   })
+}
+
+async function configurationExtensionInit(options: ConfigurationExtensionInitOptions) {
+  const specification = options.specification
+  const extensionDirectory = options.extensionDirectory
+  await renderTasks([
+    {
+      title: `Generating ${specification.externalName} extension`,
+      task: async () => {
+        const templateDirectory =
+          specification.templatePath ??
+          (await findPathUp(`templates/configuration-extensions/projects/${specification.identifier}`, {
+            type: 'directory',
+            cwd: moduleDirectory(import.meta.url),
+          }))
+
+        if (!templateDirectory) {
+          throw new BugError(`Couldn't find the template for '${specification.externalName}'`)
+        }
+
+        await recursiveLiquidTemplateCopy(templateDirectory, extensionDirectory, {
+          type: specification.identifier,
+          name: options.name,
+        })
+      },
+    },
+  ])
 }
 
 async function ensureExtensionDirectoryExists({name, app}: {name: string; app: AppInterface}): Promise<string> {
