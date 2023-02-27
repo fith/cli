@@ -9,7 +9,7 @@ const TaxCalculationSchema = BaseConfigurationExtensionSchema.extend({
 })
 
 const spec = createConfigurationExtensionSpecification({
-  identifier: 'tax_calculations',
+  identifier: 'tax_calculation',
   surface: 'admin',
   schema: TaxCalculationSchema,
   deployConfig: async (config, _) => {
