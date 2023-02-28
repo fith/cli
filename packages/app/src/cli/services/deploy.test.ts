@@ -20,7 +20,7 @@ describe('deploy', () => {
   it('uploads the extension bundle with 1 UI extension', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: []}})
+    const app = testApp({extensions: {ui: [uiExtension], theme: [], function: [], configurations: []}})
 
     // When
     await testDeployBundle(app)
@@ -37,7 +37,7 @@ describe('deploy', () => {
   it('uploads the extension bundle with 1 theme extension', async () => {
     // Given
     const themeExtension = await testThemeExtensions()
-    const app = testApp({extensions: {ui: [], theme: [themeExtension], function: []}})
+    const app = testApp({extensions: {ui: [], theme: [themeExtension], function: [], configurations: []}})
 
     // When
     await testDeployBundle(app)
@@ -55,7 +55,7 @@ describe('deploy', () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const themeExtension = await testThemeExtensions()
-    const app = testApp({extensions: {ui: [uiExtension], theme: [themeExtension], function: []}})
+    const app = testApp({extensions: {ui: [uiExtension], theme: [themeExtension], function: [], configurations: []}})
 
     // When
     await testDeployBundle(app)
