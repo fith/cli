@@ -1,12 +1,17 @@
 import * as jscodeshift from 'jscodeshift/src/Runner.js'
-import {cwd, dirname, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
+import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {outputInfo, outputSuccess, outputWarn} from '@shopify/cli-kit/node/output'
 import {isClean} from '@shopify/cli-kit/node/git'
-import {glob} from '@shopify/cli-kit/node/fs'
-import {PluginManager} from 'live-plugin-manager'
+import {findPathUp, glob} from '@shopify/cli-kit/node/fs'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {
+  packageManager,
+  PackageManager,
+  packageManagerUsedForCreating,
+  usesWorkspaces,
+} from '@shopify/cli-kit/node/node-package-manager'
+import {exec} from '@shopify/cli-kit/node/system'
 import fs from 'fs'
-import {fileURLToPath} from 'url'
 
 interface TransformOptions {
   /** Include files that match a provided glob expression */
@@ -44,6 +49,9 @@ interface TransformOptions {
 
   /** If true, bypass Git safety checks and forcibly run transform */
   force?: boolean
+
+  /** Specify the package manager to use for installing codemod dependencies */
+  packageManager?: string | undefined
 }
 
 export async function transform(options: TransformOptions) {
@@ -67,16 +75,16 @@ export async function transform(options: TransformOptions) {
     throw new Error(`No files found for ${options.include}`)
   }
 
-  const packageManager = new PluginManager({
-    cwd: cwd(),
-    pluginsPath: joinPath(dirname(fileURLToPath(import.meta.url)), 'node_modules'),
-  })
-
   if (!options.package) {
     // Should prompt for package selection here
     // Get from default list
     throw new Error(`No package specified.`)
   }
+
+  const packageManager: PackageManager = inferPackageManager(options.packageManager)
+  await installPackage(options.package, packageManager)
+  const packagePath = await fetchPackagePath(options.package)
+  const config = await fetchConfig(packagePath)
 
   if (!options.transform) {
     // Should prompt for transform selection here.
@@ -84,37 +92,42 @@ export async function transform(options: TransformOptions) {
     throw new Error(`No transform specified.`)
   }
 
-  const config = await fetchPackageConfig(options.package, packageManager)
   const transforms = {...config.presets, ...config.transforms}
   const transformPath = Object.entries(transforms).find(([id]) => {
     return options.transform === id
   })?.[1]
 
-  try {
-    if (!transformPath || !fs.existsSync(transformPath)) {
-      throw new Error(`No transform found for ${options.transform}`)
-    }
-
-    const res = await jscodeshift.run(transformPath, filePaths, {
-      babel: true,
-      silent: true,
-      stdin: false,
-      ignoreConfig: [],
-      cpus: options.cpus,
-      dry: options.dry,
-      extensions: options.extensions,
-      ignorePattern: options.ignore,
-      parser: options.parser,
-      print: options.print,
-      runInBand: options.runInBand,
-      verbose: options.verbose ? 2 : 0,
-    })
-
-    outputSuccess('Transform complete.')
-    outputInfo(JSON.stringify(res, null, 2))
-  } catch (error: unknown) {
-    throw new Error(`${error}`)
+  if (!transformPath || !fs.existsSync(transformPath)) {
+    throw new Error(`No transform found for ${options.transform}`)
   }
+
+  const codeshiftOptions = options.options ? JSON.stringify(options.options) : {}
+  const res = await jscodeshift.run(transformPath, filePaths, {
+    babel: true,
+    silent: true,
+    stdin: true,
+    ignoreConfig: [],
+    cpus: options.cpus,
+    dry: options.dry,
+    extensions: options.extensions,
+    ignorePattern: options.ignore,
+    parser: options.parser,
+    print: options.print,
+    runInBand: options.runInBand,
+    verbose: options.verbose ? 2 : 0,
+    ...codeshiftOptions,
+  })
+
+  outputSuccess('Transform complete.')
+  await removePackage(options.package, packageManager)
+}
+
+function inferPackageManager(optionsPackageManager: string | undefined): PackageManager {
+  if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
+    return optionsPackageManager as PackageManager
+  }
+  const usedPackageManager = packageManagerUsedForCreating()
+  return usedPackageManager === 'unknown' ? 'npm' : usedPackageManager
 }
 
 interface CodeshiftConfig {
@@ -123,20 +136,33 @@ interface CodeshiftConfig {
   presets?: {[key: string]: string}
 }
 
-export async function fetchPackageConfig(packageName: string, packageManager: PluginManager) {
+async function installPackage(packageName: string, packageManager: PackageManager) {
   outputInfo(`Attempting to download npm package: ${packageName}`)
-  const config = await fetchPackage(packageName, packageManager)
-  outputInfo(`Found package: ${packageName}`)
-  return config
+  const useWorkspaceFlag = await usesWorkspaces(cwd())
+  const commandMap = {
+    pnpm: 'add',
+    yarn: 'add',
+    npm: 'install',
+  } as const
+
+  try {
+    await exec(packageManager, [commandMap[packageManager], packageName, useWorkspaceFlag ? '-w' : ''], {cwd: cwd()})
+    outputInfo(`Found package: ${packageName}`)
+  } catch (error) {
+    throw new Error(`Failed to install dependencies for ${packageName}. ${error}`)
+  }
 }
 
-async function fetchPackage(packageName: string, packageManager: PluginManager): Promise<CodeshiftConfig> {
-  await packageManager.install(packageName)
-  const info = packageManager.getInfo(packageName)
-  if (!info) {
-    throw new Error(`Unable to locate package files for package: '${packageName}'`)
+async function fetchPackagePath(packageName: string) {
+  const packagePath = await findPathUp(joinPath('node_modules', packageName), {
+    cwd: cwd(),
+    type: 'directory',
+    allowSymlinks: true,
+  })
+  if (!packagePath) {
+    throw new Error(`Unable to locate package: '${packageName}'`)
   }
-  return fetchConfig(info.location)
+  return packagePath
 }
 
 async function fetchConfig(packagePath: string): Promise<CodeshiftConfig> {
@@ -153,5 +179,17 @@ async function fetchConfig(packagePath: string): Promise<CodeshiftConfig> {
     throw new Error(
       `Found config file "${configPath}" but was unable to parse it. This can be caused when transform or preset paths are incorrect.`,
     )
+  }
+}
+
+async function removePackage(packageName: string, packageManager: PackageManager) {
+  outputInfo(`Cleaning up: ${packageName}`)
+
+  try {
+    const command = ['pnpm', 'yarn'].includes(packageManager) ? 'remove' : 'uninstall'
+    await exec(packageManager, [command, packageName], {cwd: cwd()})
+    outputInfo(`Removed package: ${packageName}`)
+  } catch (error) {
+    throw new Error(`Failed to remove ${packageName}`)
   }
 }
