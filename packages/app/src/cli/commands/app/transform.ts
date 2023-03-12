@@ -76,6 +76,17 @@ export default class Transform extends Command {
       default: false,
       char: 'f',
     }),
+    packageManager: Flags.string({
+      hidden: false,
+      description: 'Specify the package manager to use for installing codemod dependencies',
+      env: 'SHOPIFY_FLAG_PACKAGE_MANAGER',
+      options: ['pnpm', 'yarn', 'npm'],
+    }),
+    options: Flags.string({
+      hidden: false,
+      description: 'Add transform options as a JSON string.',
+      env: 'SHOPIFY_FLAG_OPTIONS',
+    }),
   }
 
   async run(): Promise<void> {
@@ -92,6 +103,8 @@ export default class Transform extends Command {
       print: flags.print,
       force: flags.force,
       verbose: flags.verbose,
+      packageManager: flags.packageManager,
+      options: flags.options,
     })
   }
 }

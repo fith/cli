@@ -51,7 +51,10 @@ interface TransformOptions {
   force?: boolean
 
   /** Specify the package manager to use for installing codemod dependencies */
-  packageManager?: string | undefined
+  packageManager?: string
+
+  /** Add transform-specific options as a JSON string. These are parsed into a JS object and passed to the transform function */
+  options?: string
 }
 
 export async function transform(options: TransformOptions) {
@@ -101,7 +104,17 @@ export async function transform(options: TransformOptions) {
     throw new Error(`No transform found for ${options.transform}`)
   }
 
-  const codeshiftOptions = options.options ? JSON.stringify(options.options) : {}
+  // This not a very good way of passing additional transform-specific options
+  // We should come up with a better strategy.
+  let transformOptions = {}
+  if (options.options) {
+    try {
+      transformOptions = JSON.parse(options.options)
+    } catch (error) {
+      throw new Error(`Failed to parse transform options: ${error}`)
+    }
+  }
+
   const res = await jscodeshift.run(transformPath, filePaths, {
     babel: true,
     silent: true,
@@ -115,10 +128,11 @@ export async function transform(options: TransformOptions) {
     print: options.print,
     runInBand: options.runInBand,
     verbose: options.verbose ? 2 : 0,
-    ...codeshiftOptions,
+    ...transformOptions,
   })
 
   outputSuccess('Transform complete.')
+  outputInfo(JSON.stringify(res, null, 2))
   await removePackage(options.package, packageManager)
 }
 
