@@ -3,7 +3,14 @@ import {appendFileSync} from './fs.js'
 import {AbortError} from './error.js'
 import {cwd} from './path.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
+import git, {
+  TaskOptions,
+  SimpleGitProgressEvent,
+  DefaultLogFields,
+  ListLogLine,
+  SimpleGit,
+  StatusResult,
+} from 'simple-git'
 
 /**
  * Initialize a git repository at the given directory.
@@ -151,6 +158,19 @@ async function getLocalLatestTag(repository: SimpleGit, repoUrl: string): Promis
   }
 
   return latest
+}
+
+/**
+ * Gets whether this represents a clean working branch.
+ *
+ * @param directory - The directory of the git repository.
+ * @returns Weather this working branch is clean or not.
+ */
+export async function isClean(directory?: string): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const status: StatusResult = await git({baseDir: directory}).status()
+  return status.isClean()
 }
 
 /**

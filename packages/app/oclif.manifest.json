@@ -853,6 +853,81 @@
           "name": "file"
         }
       }
+    },
+    "app:transform": {
+      "id": "app:transform",
+      "description": "Codemods for Shopify apps.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "hidden": false,
+          "multiple": false,
+          "default": "."
+        },
+        "include": {
+          "name": "include",
+          "type": "option",
+          "description": "Glob of the files to apply the transform.",
+          "hidden": false,
+          "multiple": false,
+          "default": "."
+        },
+        "transform": {
+          "name": "transform",
+          "type": "option",
+          "description": "The name of the transform to apply.",
+          "hidden": false,
+          "multiple": false
+        },
+        "package": {
+          "name": "package",
+          "type": "option",
+          "description": "The package to look for transforms.",
+          "hidden": false,
+          "multiple": false
+        },
+        "print": {
+          "name": "print",
+          "type": "boolean",
+          "description": "Skips the installation of dependencies.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "dry": {
+          "name": "dry",
+          "type": "boolean",
+          "description": "Application's API key that will be exposed at build time.",
+          "hidden": false
+        },
+        "force": {
+          "name": "force",
+          "type": "boolean",
+          "description": "Application's API key that will be exposed at build time.",
+          "hidden": false
+        }
+      },
+      "args": {}
     }
   }
 }

@@ -11,6 +11,7 @@ const mockedGetConfig = vi.fn(async () => ({}))
 const mockedGetLog = vi.fn(async () => ({}))
 const mockedCommit = vi.fn(async () => ({}))
 const mockedRaw = vi.fn(async () => '')
+const mockedStatus = vi.fn(async () => ({}))
 const mockedCheckout = vi.fn(async () => ({}))
 const simpleGitProperties = {
   clone: mockedClone,
@@ -19,6 +20,7 @@ const simpleGitProperties = {
   getConfig: mockedGetConfig,
   log: mockedGetLog,
   commit: mockedCommit,
+  status: mockedStatus,
   raw: mockedRaw,
   checkoutLocalBranch: mockedCheckout,
 }
@@ -305,5 +307,22 @@ describe('ensureInsideGitDirectory()', () => {
 
     // Then
     expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})
+  })
+})
+
+describe('isClean()', () => {
+  it('return true when the git status is clean', async () => {
+    const status = true
+
+    mockedStatus.mockResolvedValue({isClean: () => status})
+
+    await expect(git.isClean()).resolves.toBe(status)
+  })
+  it('return false when the git status is not clean', async () => {
+    const status = false
+
+    mockedStatus.mockResolvedValue({isClean: () => status})
+
+    await expect(git.isClean()).resolves.toBe(status)
   })
 })
