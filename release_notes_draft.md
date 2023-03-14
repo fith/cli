@@ -32,7 +32,7 @@ Customer Accounts UI Extensions will now redirect to the customer account page.
 * *Theme environments.* Configure environments with theme and store in a
 `shopify.theme.toml` file in your project root. Use the `--environment` flag (or
 `-e` for short) to switch between environments. For more details, read the docs
-at https://shopify.dev/...
+at https://shopify.dev/docs/themes/tools/cli
 * *Fix: Clean up errors on theme dev.* Analytics requests were causing many errors in
 both the CLI and Chrome consoles. These requests have been stubbed out.
 * *Fix: 422 error on theme dev.* Truncate the development theme name to ≤ 50
