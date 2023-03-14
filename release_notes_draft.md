@@ -33,7 +33,7 @@ Customer Accounts UI Extensions will now redirect to the customer account page.
 `shopify.theme.toml` file in your project root. Use the `--environment` flag (or
 `-e` for short) to switch between environments. For more details, read the docs
 at https://shopify.dev/...
-* *Fix: Clean up theme errors.* Analytics requests were causing many errors in
+* *Fix: Clean up errors on theme dev.* Analytics requests were causing many errors in
 both the CLI and Chrome consoles. These requests have been stubbed out.
 * *Fix: CORS error on theme dev.* Eliminate CORS error in the browser console
 when using hot module reloading.
