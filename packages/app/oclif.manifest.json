@@ -903,7 +903,7 @@
         "package": {
           "name": "package",
           "type": "option",
-          "description": "The package to look for transforms.",
+          "description": "The package to containing the codemod transforms.",
           "hidden": false,
           "multiple": false
         },
@@ -911,8 +911,7 @@
           "name": "print",
           "type": "boolean",
           "description": "Skips the installation of dependencies.",
-          "hidden": false,
-          "allowNo": false
+          "hidden": false
         },
         "dry": {
           "name": "dry",
@@ -924,6 +923,12 @@
           "name": "force",
           "type": "boolean",
           "description": "Application's API key that will be exposed at build time.",
+          "hidden": false
+        },
+        "transformOptions": {
+          "name": "transformOptions",
+          "type": "boolean",
+          "description": "Options as a JSON string passed to the transform function.",
           "hidden": false
         }
       },

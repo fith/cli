@@ -3,7 +3,7 @@ import {cwd, dirname, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {outputInfo, outputSuccess, outputWarn} from '@shopify/cli-kit/node/output'
 import {isClean} from '@shopify/cli-kit/node/git'
 import {glob} from '@shopify/cli-kit/node/fs'
-import {PluginManager} from 'live-plugin-manager'
+import {IPluginInfo, PluginManager} from 'live-plugin-manager'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import fs from 'fs'
@@ -51,24 +51,22 @@ interface TransformOptions {
 }
 
 export async function transform(options: TransformOptions) {
-  if (!options.dry) {
-    const clean = await isClean(cwd())
-    if (!clean) {
-      if (options.force) {
-        outputWarn('Forcibly continuing')
-      } else {
-        renderWarning({
-          headline: 'Before we continue, please stash or commit your git changes.',
-          body: 'You may use the --force flag to override this safety check.',
-        })
-        return
-      }
+  const clean = await isClean(cwd())
+  if (!clean) {
+    if (options.force) {
+      outputWarn('Forcibly continuing')
+    } else {
+      renderWarning({
+        headline: 'Before we continue, please stash or commit your git changes.',
+        body: 'You may use the --force flag to override this safety check.',
+      })
+      return
     }
   }
 
   const filePaths = await glob(options.include, {cwd: cwd()})
   if (filePaths.length === 0) {
-    throw new Error(`No files found for ${options.include}`)
+    throw new AbortError(`No files found for ${options.include}`)
   }
 
   const packageManager = new PluginManager({
@@ -79,7 +77,7 @@ export async function transform(options: TransformOptions) {
   if (!options.package) {
     // Should prompt for package selection here
     // Get from default list
-    throw new Error(`No package specified.`)
+    throw new AbortError(`No package specified.`)
   }
 
   if (!options.transform) {
@@ -99,7 +97,7 @@ export async function transform(options: TransformOptions) {
     try {
       transformOptions = JSON.parse(options.transformOptions)
     } catch (error) {
-      throw new Error(`Failed to parse transform options: ${error}`)
+      throw new AbortError(`Failed to parse transform options: ${error}`)
     }
   }
 
@@ -107,24 +105,32 @@ export async function transform(options: TransformOptions) {
     throw new AbortError(`No transform found for ${options.transform}`)
   }
 
-  const res = await jscodeshift.run(transformPath, filePaths, {
-    babel: true,
-    silent: true,
-    stdin: false,
-    ignoreConfig: [],
-    cpus: options.cpus,
-    dry: options.dry,
-    extensions: options.extensions,
-    ignorePattern: options.ignore,
-    parser: options.parser,
-    print: options.print,
-    runInBand: options.runInBand,
-    verbose: options.verbose ? 2 : 0,
-    ...transformOptions,
-  })
+  try {
+    const res = await jscodeshift.run(transformPath, filePaths, {
+      babel: true,
+      silent: true,
+      stdin: true,
+      ignoreConfig: [],
+      cpus: options.cpus,
+      dry: options.dry,
+      extensions: options.extensions,
+      ignorePattern: options.ignore,
+      parser: options.parser,
+      print: options.print,
+      runInBand: options.runInBand,
+      verbose: options.verbose ? 2 : 0,
+      ...transformOptions,
+    })
 
-  outputSuccess('Transform complete.')
-  outputInfo(JSON.stringify(res, null, 2))
+    outputSuccess(`
+  Not changed: ${res.nochange}
+  Skipped: ${res.skip}
+  Errors: ${res.error}
+  Success: ${res.ok}
+  Time elapsed: ${res.timeElapsed}`)
+  } catch (error) {
+    throw new AbortError(`Failed to execute transform ${transform}`)
+  }
 }
 
 interface CodeshiftConfig {
@@ -146,11 +152,13 @@ async function fetchPackage(packageName: string, packageManager: PluginManager):
   if (!info) {
     throw new Error(`Unable to locate package files for package: '${packageName}'`)
   }
-  return fetchConfig(info.location)
+  return fetchConfig(info)
 }
 
-async function fetchConfig(packagePath: string): Promise<CodeshiftConfig> {
-  const configPath = joinPath(packagePath, 'codeshift.config.js')
+async function fetchConfig(packageInfo: IPluginInfo): Promise<CodeshiftConfig> {
+  const configPath = packageInfo.mainFile.includes('codeshift.config.js')
+    ? packageInfo.mainFile
+    : joinPath(packageInfo.location, 'codeshift.config.js')
   const resolvedConfigPath = resolvePath(configPath)
   const exists = fs.existsSync(resolvedConfigPath)
   if (!exists) {
@@ -160,7 +168,7 @@ async function fetchConfig(packagePath: string): Promise<CodeshiftConfig> {
     const config = await import(resolvedConfigPath)
     return 'default' in config ? config.default : config
   } catch (error) {
-    throw new Error(
+    throw new AbortError(
       `Found config file "${configPath}" but was unable to parse it. This can be caused when transform or preset paths are incorrect.`,
     )
   }

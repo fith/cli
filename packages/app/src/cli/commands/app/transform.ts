@@ -20,7 +20,7 @@ export default class Transform extends Command {
     }),
     transform: Flags.string({
       hidden: false,
-      description: 'The name of the transform to apply.',
+      description: 'The name of the transform to apply',
       env: 'SHOPIFY_FLAG_TRANSFORM',
       char: 't',
     }),
@@ -50,7 +50,7 @@ export default class Transform extends Command {
       env: 'SHOPIFY_FLAG_CPUS',
       char: 'c',
     }),
-    runInBand: Flags.boolean({
+    'run-in-band': Flags.boolean({
       hidden: false,
       description: 'Run serially in the current process',
       env: 'SHOPIFY_FLAG_RUN_IN_BAND',
@@ -58,27 +58,27 @@ export default class Transform extends Command {
     }),
     dry: Flags.boolean({
       hidden: false,
-      description: 'Do a dry-run, no code will be edited.',
+      description: 'Do a dry-run, no code will be edited',
       env: 'SHOPIFY_FLAG_DRY',
       default: false,
       char: 'd',
     }),
     print: Flags.boolean({
       hidden: false,
-      description: 'Print the changed output for comparison.',
+      description: 'Print the changed output for comparison',
       env: 'SHOPIFY_FLAG_PRINT',
       default: false,
     }),
     force: Flags.boolean({
       hidden: false,
-      description: 'Bypass Git safety checks and forcibly run transform.',
+      description: 'Bypass Git safety checks and forcibly run transform',
       env: 'SHOPIFY_FLAG_FORCE',
       default: false,
       char: 'f',
     }),
-    transformOptions: Flags.string({
+    'transform-options': Flags.string({
       hidden: false,
-      description: 'Add transform options as a JSON string.',
+      description: 'Add transform options as a JSON string',
       env: 'SHOPIFY_FLAG_OPTIONS',
     }),
   }
@@ -92,12 +92,12 @@ export default class Transform extends Command {
       parser: flags.parser,
       extensions: flags.extensions,
       ignore: flags.ignore,
-      runInBand: flags.runInBand,
+      runInBand: flags['run-in-band'],
       dry: flags.dry,
       print: flags.print,
       force: flags.force,
       verbose: flags.verbose,
-      transformOptions: flags.transformOptions,
+      transformOptions: flags['transform-options'],
     })
   }
 }
