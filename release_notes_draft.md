@@ -35,8 +35,6 @@ Customer Accounts UI Extensions will now redirect to the customer account page.
 at https://shopify.dev/...
 * *Fix: Clean up errors on theme dev.* Analytics requests were causing many errors in
 both the CLI and Chrome consoles. These requests have been stubbed out.
-* *Fix: CORS error on theme dev.* Eliminate CORS error in the browser console
-when using hot module reloading.
 * *Fix: 422 error on theme dev.* Truncate the development theme name to ≤ 50
 characters, preventing a 422 error.
 * *Fix: `Ruby is required to continue`.* Eliminate error where the CLI can't find
