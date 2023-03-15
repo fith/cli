@@ -45,16 +45,16 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
-  if (!options.app.hasExtensions()) {
-    renderInfo({headline: 'No extensions to deploy to Shopify Partners yet.'})
-    return
-  }
-
   // eslint-disable-next-line prefer-const
   let {app, identifiers, partnersApp, token, organization} = await ensureDeployContext(options)
   const apiKey = identifiers.app
 
   let label: string | undefined
+
+  if (!options.app.hasExtensions() && !organization.betas.appUiDeployments) {
+    renderInfo({headline: 'No extensions to deploy to Shopify Partners yet.'})
+    return
+  }
 
   if (organization.betas.appUiDeployments) {
     label = await renderTextPrompt({
@@ -99,12 +99,16 @@ export async function deploy(options: DeployOptions) {
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
-      const bundlePath = joinPath(tmpDir, `bundle.zip`)
-      await mkdir(dirname(bundlePath))
       const bundleTheme = useThemebundling() && app.extensions.theme.length !== 0
       const bundleUI = app.extensions.ui.length !== 0
       const bundle = bundleTheme || bundleUI
-      await bundleAndBuildExtensions({app, bundlePath, identifiers, bundle})
+      let bundlePath: string | undefined
+
+      if (bundle) {
+        bundlePath = joinPath(tmpDir, `bundle.zip`)
+        await mkdir(dirname(bundlePath))
+        await bundleAndBuildExtensions({app, bundlePath, identifiers, bundle})
+      }
 
       const tasks: Task<TasksContext>[] = [
         {
@@ -116,15 +120,13 @@ export async function deploy(options: DeployOptions) {
         {
           title: organization.betas.appUiDeployments ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
-            if (bundle) {
-              ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
-                apiKey,
-                bundlePath,
-                extensions,
-                token,
-                label,
-              }))
-            }
+            ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
+              apiKey,
+              bundlePath,
+              extensions,
+              token,
+              label,
+            }))
 
             if (!useThemebundling()) {
               await uploadThemeExtensions(options.app.extensions.theme, {apiKey, identifiers, token})

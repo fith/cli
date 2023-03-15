@@ -42,7 +42,7 @@ export interface ExtensionSettings {
 export interface CreateDeploymentVariables {
   apiKey: string
   uuid: string
-  bundleUrl: string
+  bundleUrl?: string
   extensions: ExtensionSettings[]
   label?: string
 }
