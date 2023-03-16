@@ -910,24 +910,24 @@
         "print": {
           "name": "print",
           "type": "boolean",
-          "description": "Skips the installation of dependencies.",
+          "description": "Print the changed output is printed for comparison.",
           "hidden": false
         },
         "dry": {
           "name": "dry",
           "type": "boolean",
-          "description": "Application's API key that will be exposed at build time.",
+          "description": "Perform a dry-run, no code will be edited.",
           "hidden": false
         },
         "force": {
           "name": "force",
           "type": "boolean",
-          "description": "Application's API key that will be exposed at build time.",
+          "description": "Bypass Git safety checks and forcibly run transform.",
           "hidden": false
         },
         "transformOptions": {
           "name": "transformOptions",
-          "type": "boolean",
+          "type": "option",
           "description": "Options as a JSON string passed to the transform function.",
           "hidden": false
         }

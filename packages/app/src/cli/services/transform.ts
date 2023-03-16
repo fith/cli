@@ -1,13 +1,15 @@
 import * as jscodeshift from 'jscodeshift/src/Runner.js'
 import {cwd, dirname, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
-import {outputInfo, outputSuccess, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputNewline, outputSuccess, outputWarn} from '@shopify/cli-kit/node/output'
 import {isClean} from '@shopify/cli-kit/node/git'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {IPluginInfo, PluginManager} from 'live-plugin-manager'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import fs from 'fs'
 import {fileURLToPath} from 'url'
+
+const packages = ['@shopify/polaris-codemods']
 
 interface TransformOptions {
   /** Include files that match a provided glob expression */
@@ -18,21 +20,6 @@ interface TransformOptions {
 
   /** The name of transform */
   transform?: string
-
-  /** Parser to use for parsing the source files */
-  parser?: string
-
-  /** Transform files with these file extensions (comma separated list) */
-  extensions?: string
-
-  /** Ignore files that match a provided glob expression */
-  ignore?: string
-
-  /** Start at most N child processes to process source files */
-  cpus?: string
-
-  /** Run serially in the current process */
-  runInBand?: boolean
 
   /** If true, no code will be edited */
   dry?: boolean
@@ -74,22 +61,29 @@ export async function transform(options: TransformOptions) {
     pluginsPath: joinPath(dirname(fileURLToPath(import.meta.url)), 'node_modules'),
   })
 
-  if (!options.package) {
-    // Should prompt for package selection here
-    // Get from default list
-    throw new AbortError(`No package specified.`)
-  }
+  const packageName =
+    options.package ??
+    (await renderSelectPrompt({
+      message: 'What package would you like to update with a transform?',
+      choices: packages.map((pkg) => {
+        return {value: pkg, label: pkg}
+      }),
+    }))
 
-  if (!options.transform) {
-    // Should prompt for transform selection here.
-    // Get list from selected package
-    throw new Error(`No transform specified.`)
-  }
+  const config = await fetchPackageConfig(packageName, packageManager)
+  const transforms = {...config.transforms, ...config.presets}
 
-  const config = await fetchPackageConfig(options.package, packageManager)
-  const transforms = {...config.presets, ...config.transforms}
+  const transform =
+    options.transform ??
+    (await renderSelectPrompt({
+      message: 'Select a transform to apply.',
+      choices: Object.keys(transforms).map((transformName) => {
+        return {value: transformName, label: transformName}
+      }),
+    }))
+
   const transformPath = Object.entries(transforms).find(([id]) => {
-    return options.transform === id
+    return transform === id
   })?.[1]
 
   let transformOptions = {}
@@ -111,13 +105,12 @@ export async function transform(options: TransformOptions) {
       silent: true,
       stdin: true,
       ignoreConfig: [],
-      cpus: options.cpus,
+      extensions: 'js, jsx, ts, tsx',
+      ignorePattern: '**/node_modules/**',
+      parser: 'tsx',
+      runInBand: false,
       dry: options.dry,
-      extensions: options.extensions,
-      ignorePattern: options.ignore,
-      parser: options.parser,
       print: options.print,
-      runInBand: options.runInBand,
       verbose: options.verbose ? 2 : 0,
       ...transformOptions,
     })
@@ -140,18 +133,26 @@ interface CodeshiftConfig {
 }
 
 export async function fetchPackageConfig(packageName: string, packageManager: PluginManager) {
-  outputInfo(`Attempting to download npm package: ${packageName}`)
+  outputInfo(`Attempting to download package: ${packageName}`)
   const config = await fetchPackage(packageName, packageManager)
-  outputInfo(`Found package: ${packageName}`)
+  outputInfo('Found package.')
+  outputNewline()
   return config
 }
 
 async function fetchPackage(packageName: string, packageManager: PluginManager): Promise<CodeshiftConfig> {
-  await packageManager.install(packageName)
-  const info = packageManager.getInfo(packageName)
-  if (!info) {
-    throw new Error(`Unable to locate package files for package: '${packageName}'`)
+  async function installPackageDeps(packageName: string, version?: string): Promise<IPluginInfo> {
+    await packageManager.install(packageName, version)
+    const info = packageManager.getInfo(packageName)
+    if (!info) {
+      throw new Error(`Unable to locate package files for package: '${packageName}'`)
+    }
+    const dependencies = Object.entries(info.dependencies)
+    await Promise.all(dependencies.map(([pkgName, version]) => installPackageDeps(pkgName, version)))
+    return info
   }
+
+  const info = await installPackageDeps(packageName)
   return fetchConfig(info)
 }
 
