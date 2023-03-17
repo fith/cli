@@ -285,6 +285,85 @@
       },
       "args": {}
     },
+    "app:transform": {
+      "id": "app:transform",
+      "description": "Code transformations for updating Polaris apps.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "include": {
+          "name": "include",
+          "type": "option",
+          "description": "Include files that match a provided glob expression",
+          "hidden": false,
+          "required": true,
+          "multiple": false
+        },
+        "package": {
+          "name": "package",
+          "type": "option",
+          "description": "The package which the transform is related",
+          "hidden": false,
+          "multiple": false
+        },
+        "transform": {
+          "name": "transform",
+          "type": "option",
+          "char": "t",
+          "description": "The name of the transform to apply",
+          "hidden": false,
+          "multiple": false
+        },
+        "dry": {
+          "name": "dry",
+          "type": "boolean",
+          "char": "d",
+          "description": "Do a dry-run, no code will be edited",
+          "hidden": false,
+          "allowNo": false
+        },
+        "print": {
+          "name": "print",
+          "type": "boolean",
+          "description": "Print the changed output for comparison",
+          "hidden": false,
+          "allowNo": false
+        },
+        "force": {
+          "name": "force",
+          "type": "boolean",
+          "char": "f",
+          "description": "Bypass Git safety checks and forcibly run transform",
+          "hidden": false,
+          "allowNo": false
+        },
+        "transform-options": {
+          "name": "transform-options",
+          "type": "option",
+          "description": "Add transform options as a JSON string",
+          "hidden": false,
+          "multiple": false
+        }
+      },
+      "args": {}
+    },
     "app:update-url": {
       "id": "app:update-url",
       "description": "Update your app and redirect URLs in the Partners Dashboard.",
@@ -853,86 +932,6 @@
           "name": "file"
         }
       }
-    },
-    "app:transform": {
-      "id": "app:transform",
-      "description": "Codemods for Shopify apps.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "hidden": false,
-          "multiple": false,
-          "default": "."
-        },
-        "include": {
-          "name": "include",
-          "type": "option",
-          "description": "Glob of the files to apply the transform.",
-          "hidden": false,
-          "multiple": false,
-          "default": "."
-        },
-        "transform": {
-          "name": "transform",
-          "type": "option",
-          "description": "The name of the transform to apply.",
-          "hidden": false,
-          "multiple": false
-        },
-        "package": {
-          "name": "package",
-          "type": "option",
-          "description": "The package to containing the codemod transforms.",
-          "hidden": false,
-          "multiple": false
-        },
-        "print": {
-          "name": "print",
-          "type": "boolean",
-          "description": "Print the changed output is printed for comparison.",
-          "hidden": false
-        },
-        "dry": {
-          "name": "dry",
-          "type": "boolean",
-          "description": "Perform a dry-run, no code will be edited.",
-          "hidden": false
-        },
-        "force": {
-          "name": "force",
-          "type": "boolean",
-          "description": "Bypass Git safety checks and forcibly run transform.",
-          "hidden": false
-        },
-        "transformOptions": {
-          "name": "transformOptions",
-          "type": "option",
-          "description": "Options as a JSON string passed to the transform function.",
-          "hidden": false
-        }
-      },
-      "args": {}
     }
   }
 }
