@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 3.45.0-pre.4
+
+### Patch Changes
+
+- b650d2234: Update the cart_transform templatePath to point to checkout/${lang}/cart-transform/default
+- Updated dependencies [ce1457036]
+- Updated dependencies [2ca5b35d8]
+  - @shopify/cli-kit@3.45.0-pre.4
+  - @shopify/plugin-cloudflare@3.45.0-pre.4
+  - @shopify/plugin-ngrok@3.45.0-pre.4
+
 ## 3.45.0-pre.3
 
 ### Patch Changes
